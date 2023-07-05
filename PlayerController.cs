@@ -1,12 +1,3 @@
-/*****************************************************************//**
- * \file   PlayerController.cs
- * \brief  General player controller implementation, with additional
- *         gyroscope functionality.
- * 
- * \author Mike Doeren
- * \date   July 2023
- *********************************************************************/
-
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -22,21 +13,22 @@ public class PlayerController : MonoBehaviour
     // Gyroscope Variables
     bool gyroSupported;
     private Gyroscope gyro;
+    float shakeThreshold;
 
     private void Awake()
     {
+        gyro = Input.gyro;
         rb = GetComponent<Rigidbody>();
-
-        // Determine if gyroscope is supported on device
-        gyroSupported = SystemInfo.supportsGyroscope;
-
-        if (gyroSupported)
-            EnableGyro();
     }
 
     // Start is called before the first frame update
     void Start()
-    {   
+    {
+        if (SystemInfo.supportsGyroscope)
+        {
+            Input.gyro.enabled = true;
+            gyroSupported = true;
+        }            
     }
 
     // Update is called once per frame
@@ -49,25 +41,16 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private void EnableGyro()
-    {
-        if (gyroSupported)
-        {
-            gyro = Input.gyro;
-            gyro.enabled = true;
-        }
-    }
-
     // Detect if device is shaking via gyroscope
     private bool IsDeviceShaking()
     {
         if (!gyroSupported || gyro == null)
             return false;
 
-        float shakeThreshold = 1.0f; // Adjust to control sensitivity of shake detection
-        Vector3 accel = gyro.userAcceleration;
+        shakeThreshold = 0.001f; // Adjust to control sensitivity of shake detection
+        Vector3 rotationRate = gyro.rotationRate;
 
-        return accel.sqrMagnitude >= shakeThreshold * shakeThreshold;
+        return rotationRate.sqrMagnitude >= shakeThreshold * shakeThreshold;
     }
 
     // When the player is on an object (i.e. the ground)
